@@ -1,24 +1,36 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/paoloconi96/invoice-parser/internal/invparser"
-	"github.com/paoloconi96/invoice-parser/internal/lang"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 )
 
 type Invoice struct {
 	File *multipart.FileHeader `form:"file"`
 }
 
-var parserChannel = make(chan string)
+var parserChannel = make(chan *[]byte)
+var ctx = context.Background()
 
 func main() {
-	go processInvoices(parserChannel, lang.MockDetector{}, invparser.MockParser{})
+	parser := invparser.NewGDocAiParser(
+		ctx,
+		os.Getenv("GOOGLE_CLOUD_LOCATION"),
+		os.Getenv("GOOGLE_CLOUD_PROJECT_ID"),
+		os.Getenv("GOOGLE_CLOUD_DOCUMENT_AI_PROCESSOR_ID"),
+	)
+	go processInvoices(parserChannel, parser)
 
 	router := gin.Default()
+	router.Use(cors.Default())
+
 	router.POST("/api/v1/invoices", addInvoice)
 
 	router.Run("localhost:8000")
@@ -45,21 +57,20 @@ func addInvoice(ctx *gin.Context) {
 		}
 	}(file)
 
-	var fileContent []byte
-	_, err = file.Read(fileContent)
+	fileContent, err := io.ReadAll(file)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, invalidMessage)
 		return
 	}
 
-	parserChannel <- string(fileContent)
+	fmt.Println(string(fileContent))
+	parserChannel <- &fileContent
 
 	ctx.JSON(http.StatusOK, invoice)
 }
 
-func processInvoices(tasks <-chan string, detector lang.Detector, parser invparser.Parser) {
+func processInvoices(tasks <-chan *[]byte, parser invparser.Parser) {
 	for taskInput := range tasks {
-		fmt.Println(detector.Detect(taskInput))
-		fmt.Println(parser.Parse(taskInput))
+		fmt.Println(parser.Parse(ctx, taskInput))
 	}
 }

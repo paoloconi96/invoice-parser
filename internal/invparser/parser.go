@@ -1,6 +1,8 @@
 package invparser
 
 import (
+	"context"
+	"github.com/Rhymond/go-money"
 	"time"
 )
 
@@ -12,16 +14,17 @@ const (
 
 type Product struct {
 	name     string
-	amount   string
+	amount   *money.Money
 	category Category
 }
 
 type Invoice struct {
-	amount   string
+	amount   *money.Money
 	date     time.Time
 	products []Product
+	language string
 }
 
 type Parser interface {
-	Parse(content string) Invoice
+	Parse(ctx context.Context, content *[]byte) Invoice
 }
