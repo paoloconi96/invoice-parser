@@ -3,6 +3,7 @@ package invparser
 import (
 	"context"
 	"github.com/Rhymond/go-money"
+	"io"
 	"time"
 )
 
@@ -18,6 +19,13 @@ type Product struct {
 	category Category
 }
 
+type InvoiceId string
+
+type InputInvoice struct {
+	Id         InvoiceId `json:"id"`
+	FileReader io.Reader `json:"-"`
+}
+
 type Invoice struct {
 	amount   *money.Money
 	date     time.Time
@@ -26,5 +34,5 @@ type Invoice struct {
 }
 
 type Parser interface {
-	Parse(ctx context.Context, content *[]byte) Invoice
+	Parse(ctx context.Context, invoice *InputInvoice) Invoice
 }
