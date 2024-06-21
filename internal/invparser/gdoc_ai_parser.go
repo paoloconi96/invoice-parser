@@ -23,13 +23,16 @@ func (p *GDocAiParser) Close() error {
 	return p.client.Close()
 }
 
-func (p *GDocAiParser) Parse(ctx context.Context, content *[]byte) Invoice {
+func (p *GDocAiParser) Parse(ctx context.Context, inputInvoice *InputInvoice) Invoice {
+	var content []byte
+	inputInvoice.FileReader.Read(content)
+
 	req := &documentaipb.ProcessRequest{
 		Name: fmt.Sprintf("projects/%s/locations/%s/processors/%s", p.projectID, p.location, p.processorID),
 		Source: &documentaipb.ProcessRequest_RawDocument{
 			RawDocument: &documentaipb.RawDocument{
-				Content:  *content,
-				MimeType: http.DetectContentType(*content),
+				Content:  content,
+				MimeType: http.DetectContentType(content),
 			},
 		},
 	}
