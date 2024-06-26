@@ -22,3 +22,5 @@
 go.work
 
 .env
+
+data/session/session_**
