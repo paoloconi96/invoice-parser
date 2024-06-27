@@ -45,7 +45,7 @@ func main() {
 	// TODO: Change this config when the domain gets unified
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = false
-	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
+	corsConfig.AllowOrigins = []string{"http://localhost:5173"}
 	corsConfig.AllowCredentials = true
 	router.Use(cors.New(corsConfig))
 
